@@ -12,22 +12,55 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
+
+        tabBarActiveTintColor: "#C9A96E", // GOLD
+        tabBarInactiveTintColor: "#888",
+
+        tabBarStyle: {
+          backgroundColor: "#1A120B", // DARK
+          borderTopWidth: 0,
+          height: 65,
+        },
+
+        tabBarLabelStyle: {
+          fontSize: 12,
+          marginBottom: 5,
+        },
+
         tabBarButton: HapticTab,
-      }}>
+      }}
+    >
+      {/* 🏠 HOME */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Home",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="house.fill" color={color} />
+          ),
         }}
       />
+
+      {/* 📞 CONTACT */}
       <Tabs.Screen
-        name="explore"
+        name="contact"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Contact",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="phone.fill" color={color} />
+          ),
+        }}
+      />
+
+      {/* 🍽️ EXPLORE / MENU */}
+      <Tabs.Screen
+        name="menu" // ⚠️ IMPORTANT: use "menu" not "explore"
+        options={{
+          title: "Explore",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="fork.knife" color={color} />
+          ),
         }}
       />
     </Tabs>
