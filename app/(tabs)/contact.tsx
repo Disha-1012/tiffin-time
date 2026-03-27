@@ -172,7 +172,7 @@ export default function Contact() {
       <GlowRing />
 
       <Animated.Text entering={FadeInDown.delay(100).springify()} style={styles.title}>
-        Reach Us
+        Contact Us
       </Animated.Text>
 
       <Animated.View entering={ZoomIn.delay(200)} style={styles.divider}>
