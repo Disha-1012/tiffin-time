@@ -1,6 +1,6 @@
 import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Animated, {
   FadeIn,
   useSharedValue,
@@ -26,7 +26,6 @@ const GOLD_BRIGHT = "#FFE5A0";
 const GOLD_LIGHT = "#F0D9A8";
 const DARK = "#1A120B";
 const CARD = "#221810";
-const SURFACE = "#2A1F14";
 
 /* 🔶 PULSING DIVIDER DOT */
 function PulsingDot() {
@@ -155,7 +154,14 @@ function MenuItem({ item, index }: { item: typeof menu[0]; index: number }) {
 
         <Text style={styles.itemName}>{item.name}</Text>
 
-        {/* 🔶 Price row — No Spice badge removed */}
+        {/* 🔶 Customizable Badge for Mixed Chaat */}
+        {item.name === "Mixed Chaat" && (
+          <View style={styles.customBadge}>
+            <Text style={styles.customBadgeText}>Customizable</Text>
+          </View>
+        )}
+
+        {/* 🔶 Price row */}
         <View style={styles.priceRow}>
           <Text style={styles.itemPrice}>₹{item.price}</Text>
         </View>
@@ -199,11 +205,8 @@ export default function Menu() {
 
   return (
     <View style={styles.container}>
-
-      {/* 🔶 Gold top accent strip */}
       <View style={styles.topStrip} />
 
-      {/* 🔝 HEADER WITH LOGO */}
       <Animated.View style={[styles.header, headerAnimStyle]}>
         <View style={styles.logoRing}>
           <Image
@@ -214,7 +217,6 @@ export default function Menu() {
         <Text style={styles.headerText}>Tiffin Time</Text>
       </Animated.View>
 
-      {/* 🔶 Title with animated underline */}
       <Animated.View style={[styles.titleWrapper, titleAnimStyle]}>
         <Animated.Text
           entering={FadeIn.duration(700)}
@@ -230,7 +232,6 @@ export default function Menu() {
         </View>
       </Animated.View>
 
-      {/* Menu List */}
       <FlatList
         data={menu}
         keyExtractor={(item) => item.id}
@@ -245,176 +246,30 @@ export default function Menu() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: DARK,
-    padding: 20,
-  },
-  topStrip: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: GOLD,
-    opacity: 0.9,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 22,
-    marginTop: 10,
-  },
-  logoRing: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: GOLD,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-    borderWidth: 2,
-    borderColor: "#C9A96E66",
-    shadowColor: GOLD,
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  logo: {
-    width: 48,
-    height: 48,
-    borderRadius: 19,
-    resizeMode: "contain",
-  },
-  headerText: {
-    color: GOLD,
-    fontSize: 22,
-    fontWeight: "bold",
-    letterSpacing: 1.2,
-  },
-  titleWrapper: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  titleText: {
-    fontSize: 24,
-    color: GOLD_BRIGHT,
-    textAlign: "center",
-    fontWeight: "700",
-    letterSpacing: 0.8,
-    marginBottom: 8,
-  },
-  titleUnderline: {
-    height: 2,
-    width: 100,
-    backgroundColor: GOLD,
-    borderRadius: 2,
-    marginBottom: 10,
-    transformOrigin: "left",
-  },
-  titleOrnament: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: 160,
-  },
-  ornamentLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#C9A96E33",
-  },
-  dividerDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: GOLD,
-    marginHorizontal: 8,
-  },
-  rowContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 8,
-  },
-  imageWrapper: {
-    width: 66,
-    height: 66,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  imageRing: {
-    position: "absolute",
-    width: 66,
-    height: 66,
-    borderRadius: 33,
-    borderWidth: 2,
-    borderColor: GOLD,
-  },
-  itemImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    borderColor: "#C9A96E55",
-  },
-  card: {
-    flex: 1,
-    backgroundColor: CARD,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#C9A96E22",
-    overflow: "hidden",
-    position: "relative",
-    shadowColor: "#000",
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  cardShimmer: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    width: 45,
-    backgroundColor: "#fff",
-    opacity: 0.04,
-    borderRadius: 4,
-    transform: [{ skewX: "-18deg" }],
-  },
-  cardShine: {
-    position: "absolute",
-    top: 0,
-    left: 16,
-    right: 16,
-    height: 1,
-    backgroundColor: "#fff",
-    opacity: 0.06,
-  },
-  itemName: {
-    fontSize: 17,
-    color: GOLD_LIGHT,
-    fontWeight: "600",
-    letterSpacing: 0.3,
-    marginBottom: 6,
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  itemPrice: {
-    color: GOLD_BRIGHT,
-    fontSize: 15,
-    fontWeight: "700",
-    letterSpacing: 0.4,
-  },
-  arrowDot: {
-    position: "absolute",
-    right: 14,
-    top: "50%",
-    marginTop: -10,
-  },
-  arrowText: {
-    color: "#C9A96E55",
-    fontSize: 22,
-    fontWeight: "300",
-  },
+  container: { flex: 1, backgroundColor: DARK, padding: 20 },
+  topStrip: { position: "absolute", top: 0, left: 0, right: 0, height: 3, backgroundColor: GOLD, opacity: 0.9 },
+  header: { flexDirection: "row", alignItems: "center", marginBottom: 22, marginTop: 10 },
+  logoRing: { width: 48, height: 48, borderRadius: 24, backgroundColor: GOLD, justifyContent: "center", alignItems: "center", marginRight: 12, borderWidth: 2, borderColor: "#C9A96E66", shadowColor: GOLD, shadowOpacity: 0.5, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } },
+  logo: { width: 48, height: 48, borderRadius: 19, resizeMode: "contain" },
+  headerText: { color: GOLD, fontSize: 22, fontWeight: "bold", letterSpacing: 1.2 },
+  titleWrapper: { alignItems: "center", marginBottom: 20 },
+  titleText: { fontSize: 24, color: GOLD_BRIGHT, textAlign: "center", fontWeight: "700", letterSpacing: 0.8, marginBottom: 8 },
+  titleUnderline: { height: 2, width: 100, backgroundColor: GOLD, borderRadius: 2, marginBottom: 10, transformOrigin: "left" },
+  titleOrnament: { flexDirection: "row", alignItems: "center", width: 160 },
+  ornamentLine: { flex: 1, height: 1, backgroundColor: "#C9A96E33" },
+  dividerDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: GOLD, marginHorizontal: 8 },
+  rowContainer: { flexDirection: "row", alignItems: "center", marginVertical: 8 },
+  imageWrapper: { width: 66, height: 66, justifyContent: "center", alignItems: "center", marginRight: 12 },
+  imageRing: { position: "absolute", width: 66, height: 66, borderRadius: 33, borderWidth: 2, borderColor: GOLD },
+  itemImage: { width: 56, height: 56, borderRadius: 28, borderWidth: 2, borderColor: "#C9A96E55" },
+  card: { flex: 1, backgroundColor: CARD, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: "#C9A96E22", overflow: "hidden", position: "relative", shadowColor: "#000", shadowOpacity: 0.5, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
+  cardShimmer: { position: "absolute", top: 0, bottom: 0, width: 45, backgroundColor: "#fff", opacity: 0.04, borderRadius: 4, transform: [{ skewX: "-18deg" }] },
+  cardShine: { position: "absolute", top: 0, left: 16, right: 16, height: 1, backgroundColor: "#fff", opacity: 0.06 },
+  itemName: { fontSize: 17, color: GOLD_LIGHT, fontWeight: "600", letterSpacing: 0.3, marginBottom: 6 },
+  priceRow: { flexDirection: "row", alignItems: "center" },
+  itemPrice: { color: GOLD_BRIGHT, fontSize: 15, fontWeight: "700", letterSpacing: 0.4 },
+  arrowDot: { position: "absolute", right: 14, top: "50%", marginTop: -10 },
+  arrowText: { color: "#C9A96E55", fontSize: 22, fontWeight: "300" },
+  customBadge: { position: "absolute", top: 12, right: 12, backgroundColor: GOLD, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  customBadgeText: { color: DARK, fontSize: 10, fontWeight: "700" },
 });

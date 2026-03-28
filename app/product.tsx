@@ -1,8 +1,10 @@
-import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Animated, {
   FadeIn,
+  SlideInLeft,
+  ZoomIn,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
@@ -11,6 +13,9 @@ import Animated, {
   withRepeat,
   withDelay,
   Easing,
+  interpolateColor,
+  interpolate,
+  useDerivedValue,
 } from "react-native-reanimated";
 
 /* ✅ TYPE FOR SPICE BUTTON */
@@ -32,6 +37,31 @@ const getImage = (name: string) => {
       return require("../assets/images/P4.png");
     case "Mixed Chaat":
       return require("../assets/images/P3.png");
+    default:
+      return require("../assets/images/P5.png");
+  }
+};
+
+const getIngredientImage = (name: string) => {
+  switch (name) {
+    case "Dahi Chaatni":
+      return require("../assets/images/Dahi Chaatni.png");
+    case "Green Chaatni":
+      return require("../assets/images/Green Chaatni.png");
+    case "Misti Chaatni":
+      return require("../assets/images/Misti Chaatni.png");
+    case "Boiled Potato":
+      return require("../assets/images/Boiled Potato.png");
+    case "Sweet Corn":
+      return require("../assets/images/Sweet Corn.png");
+    case "Onion":
+      return require("../assets/images/Onion.png");
+    case "Tomato":
+      return require("../assets/images/Tomato.png");
+    case "Chickpea":
+      return require("../assets/images/Chickpea.png");
+    case "Pomegranate":
+      return require("../assets/images/Pomegranate.png");
     default:
       return require("../assets/images/P5.png");
   }
@@ -114,6 +144,230 @@ function SpiceButton({ level, selected, onPress, delay }: SpiceButtonProps) {
   );
 }
 
+/* 🌿 INGREDIENT CHIP — animated */
+type IngredientChipProps = {
+  option: string;
+  selected: boolean;
+  onPress: () => void;
+  index: number;
+};
+
+function IngredientChip({ option, selected, onPress, index }: IngredientChipProps) {
+  const scale = useSharedValue(1);
+  const borderProgress = useSharedValue(selected ? 1 : 0);
+  const checkScale = useSharedValue(selected ? 1 : 0);
+  const glowOpacity = useSharedValue(selected ? 1 : 0);
+
+  // 🖼️ Image animation values
+  const imgScale = useSharedValue(1);
+  const ringOpacity = useSharedValue(selected ? 1 : 0);
+  const ringScale = useSharedValue(selected ? 1 : 0.7);
+
+  // 🌟 NEW: ring spin (continuous slow rotation when selected)
+  const ringRotation = useSharedValue(0);
+  // ✨ NEW: shimmer flash sweep across image on tap
+  const shimmerX = useSharedValue(-40);
+  const shimmerOpacity = useSharedValue(0);
+  // 💛 NEW: soft outer glow pulse behind image when selected
+  const outerGlow = useSharedValue(0);
+  const outerGlowScale = useSharedValue(1);
+
+  const enterDelay = 750 + index * 70;
+
+  // 🌀 Spin the ring continuously while selected
+  useEffect(() => {
+    if (selected) {
+      ringRotation.value = withRepeat(
+        withTiming(360, { duration: 2800, easing: Easing.linear }),
+        -1,
+        false
+      );
+    } else {
+      ringRotation.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
+    }
+  }, [selected]);
+
+  // 💛 Outer glow pulse while selected
+  useEffect(() => {
+    if (selected) {
+      outerGlow.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 900, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0.3, { duration: 900, easing: Easing.inOut(Easing.sin) })
+        ),
+        -1,
+        true
+      );
+      outerGlowScale.value = withRepeat(
+        withSequence(
+          withTiming(1.22, { duration: 900, easing: Easing.inOut(Easing.sin) }),
+          withTiming(1.0, { duration: 900, easing: Easing.inOut(Easing.sin) })
+        ),
+        -1,
+        true
+      );
+    } else {
+      outerGlow.value = withTiming(0, { duration: 250 });
+      outerGlowScale.value = withTiming(1, { duration: 250 });
+    }
+  }, [selected]);
+
+  useEffect(() => {
+    borderProgress.value = withTiming(selected ? 1 : 0, {
+      duration: 280,
+      easing: Easing.out(Easing.cubic),
+    });
+    checkScale.value = selected
+      ? withSequence(
+          withTiming(1.1, { duration: 110, easing: Easing.out(Easing.cubic) }),
+          withTiming(1, { duration: 90, easing: Easing.in(Easing.cubic) })
+        )
+      : withTiming(0, { duration: 150, easing: Easing.in(Easing.cubic) });
+    glowOpacity.value = withTiming(selected ? 1 : 0, { duration: 300 });
+
+    // 🖼️ Image: gentle pop on select, quietly back on deselect
+    imgScale.value = selected
+      ? withSequence(
+          withTiming(1.15, { duration: 130, easing: Easing.out(Easing.cubic) }),
+          withTiming(1, { duration: 110, easing: Easing.in(Easing.cubic) })
+        )
+      : withTiming(1, { duration: 150, easing: Easing.out(Easing.cubic) });
+
+    // 🔆 Gold ring fades + scales in when selected, disappears when not
+    ringOpacity.value = withTiming(selected ? 1 : 0, { duration: 260 });
+    ringScale.value = withTiming(selected ? 1 : 0.75, {
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [selected]);
+
+  const containerAnim = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const glowAnim = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value * 0.1,
+  }));
+
+  const checkAnim = useAnimatedStyle(() => ({
+    transform: [{ scale: checkScale.value }],
+    opacity: checkScale.value,
+  }));
+
+  // 🖼️ Image animated styles
+  const imgAnim = useAnimatedStyle(() => ({
+    transform: [{ scale: imgScale.value }],
+  }));
+
+  const ringAnim = useAnimatedStyle(() => ({
+    opacity: ringOpacity.value,
+    transform: [
+      { scale: ringScale.value },
+      { rotate: `${ringRotation.value}deg` },
+    ],
+  }));
+
+  // ✨ Shimmer sweep style
+  const shimmerAnim = useAnimatedStyle(() => ({
+    opacity: shimmerOpacity.value,
+    transform: [{ translateX: shimmerX.value }],
+  }));
+
+  // 💛 Outer glow pulse style
+  const outerGlowAnim = useAnimatedStyle(() => ({
+    opacity: outerGlow.value,
+    transform: [{ scale: outerGlowScale.value }],
+  }));
+
+  const handlePress = () => {
+    scale.value = withSequence(
+      withTiming(0.95, { duration: 60 }),
+      withTiming(1, { duration: 80, easing: Easing.out(Easing.cubic) })
+    );
+    // ✨ Trigger shimmer flash on every tap
+    shimmerX.value = -40;
+    shimmerOpacity.value = withSequence(
+      withTiming(0.55, { duration: 80 }),
+      withTiming(0, { duration: 200, easing: Easing.out(Easing.cubic) })
+    );
+    shimmerX.value = withTiming(48, { duration: 280, easing: Easing.out(Easing.cubic) });
+    onPress();
+  };
+
+  return (
+    <Animated.View
+      entering={SlideInLeft.delay(enterDelay).duration(380).easing(Easing.out(Easing.cubic))}
+      style={containerAnim}
+    >
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={0.8}
+        style={[styles.ingredientChip, selected && styles.ingredientChipActive]}
+      >
+        {/* Glow layer */}
+        <Animated.View style={[styles.chipGlow, glowAnim]} />
+
+        {/* Left accent line */}
+        {selected && (
+          <Animated.View
+            entering={FadeIn.duration(200)}
+            style={styles.chipAccentLine}
+          />
+        )}
+
+        {/* 🖼️ IMAGE with full animation suite */}
+        <View style={styles.ingredientImageWrapper}>
+          {/* 💛 Outer pulsing glow blob behind image */}
+          <Animated.View style={[styles.ingredientOuterGlow, outerGlowAnim]} />
+          {/* 🌀 Spinning gold ring */}
+          <Animated.View style={[styles.ingredientImageRing, ringAnim]} />
+          {/* Image with scale pop */}
+          <Animated.Image
+            source={getIngredientImage(option)}
+            style={[styles.ingredientImage, imgAnim]}
+          />
+          {/* ✨ Shimmer flash overlay */}
+          <Animated.View style={[styles.ingredientShimmer, shimmerAnim]} />
+        </View>
+
+        {/* Ingredient name */}
+        <Text style={[styles.chipText, selected && styles.chipTextActive]}>
+          {option}
+        </Text>
+
+        {/* Checkmark circle */}
+        <Animated.View style={[styles.checkCircle, selected && styles.checkCircleActive, checkAnim]}>
+          <Text style={styles.checkMark}>✓</Text>
+        </Animated.View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+/* 🏷️ SECTION HEADER with animated underline */
+function AnimatedSectionHeader({ label, delay }: { label: string; delay: number }) {
+  const lineWidth = useSharedValue(0);
+
+  useEffect(() => {
+    lineWidth.value = withDelay(
+      delay + 200,
+      withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) })
+    );
+  }, []);
+
+  const lineAnim = useAnimatedStyle(() => ({
+    transform: [{ scaleX: lineWidth.value }],
+    transformOrigin: "left",
+  }));
+
+  return (
+    <Animated.View entering={FadeIn.delay(delay).duration(400)} style={styles.sectionHeaderWrapper}>
+      <Text style={styles.label}>{label}</Text>
+      <Animated.View style={[styles.sectionUnderline, lineAnim]} />
+    </Animated.View>
+  );
+}
+
 export default function Product() {
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -132,7 +386,27 @@ export default function Product() {
   const [spice, setSpice] = useState("Medium");
   const [extra, setExtra] = useState(false);
 
-  const totalPrice = isCandy ? basePrice : extra ? basePrice + 5 : basePrice;
+  /* 🔶 Mixed Chaat Dropdown Options */
+  const mixedChaatOptions = [
+    "Dahi Chaatni",
+    "Green Chaatni",
+    "Misti Chaatni",
+    "Boiled Potato",
+    "Sweet Corn",
+    "Onion",
+    "Tomato",
+    "Chickpea",
+    "Pomegranate",
+  ];
+
+  const [selectedChaatOptions, setSelectedChaatOptions] = useState<string[]>([]);
+
+  /* 🔶 CALCULATE TOTAL PRICE */
+  let totalPrice = basePrice;
+  if (!isCandy) {
+    if (extra) totalPrice += 5;
+    if (productName === "Mixed Chaat" && selectedChaatOptions.length > 5) totalPrice += 5;
+  }
 
   /* 🔶 Animations */
   const ringScale = useSharedValue(1);
@@ -217,29 +491,32 @@ export default function Product() {
     popTotal();
   };
 
-  return (
-    <View style={styles.container}>
+  const handleChaatOptionToggle = (option: string) => {
+    let updated: string[] = [];
+    if (selectedChaatOptions.includes(option)) {
+      updated = selectedChaatOptions.filter((o) => o !== option);
+    } else {
+      updated = [...selectedChaatOptions, option];
+    }
+    setSelectedChaatOptions(updated);
+    popTotal();
+  };
 
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
       {/* 🔶 Gold top accent strip */}
       <View style={styles.topStrip} />
 
       {/* 🔝 HEADER */}
       <Animated.View style={[styles.header, headerAnimStyle]}>
         <View style={styles.logoRing}>
-          <Image
-            source={require("../assets/images/Logo.png")}
-            style={styles.logo}
-          />
+          <Image source={require("../assets/images/Logo.png")} style={styles.logo} />
         </View>
         <Text style={styles.headerText}>Tiffin Time</Text>
       </Animated.View>
 
       {/* 🔶 MAIN CARD */}
-      <Animated.View
-        entering={FadeIn.delay(200).duration(600)}
-        style={styles.card}
-      >
-
+      <Animated.View entering={FadeIn.delay(200).duration(600)} style={styles.card}>
         {/* 🔶 PRODUCT HEADER */}
         <View style={styles.productHeader}>
           <View style={styles.imageWrapper}>
@@ -257,11 +534,7 @@ export default function Product() {
         </View>
 
         {/* PRICE BADGE */}
-        <Animated.View
-          entering={FadeIn.delay(300).duration(600)}
-          style={styles.priceBadge}
-        >
-          {/* 🔶 Brighter Base Price label */}
+        <Animated.View entering={FadeIn.delay(300).duration(600)} style={styles.priceBadge}>
           <Text style={styles.priceBadgeLabel}>BASE PRICE</Text>
           <Text style={styles.priceBadgeValue}>₹{basePrice}</Text>
         </Animated.View>
@@ -269,13 +542,10 @@ export default function Product() {
         {/* ❌ HIDE FOR CANDY */}
         {!isCandy && (
           <>
-            <Animated.Text
-              entering={FadeIn.delay(350).duration(600)}
-              style={styles.label}
-            >
+            {/* SPICE LEVEL */}
+            <Animated.Text entering={FadeIn.delay(350).duration(600)} style={styles.label}>
               Choose Spice Level 🌶️
             </Animated.Text>
-
             {["Low", "Medium", "High"].map((level, index) => (
               <SpiceButton
                 key={level}
@@ -287,25 +557,60 @@ export default function Product() {
             ))}
 
             {/* EXTRA */}
-            <Animated.View
-              entering={FadeIn.delay(700).duration(600)}
-              style={extraAnimStyle}
-            >
+            <Animated.View entering={FadeIn.delay(700).duration(600)} style={extraAnimStyle}>
               <TouchableOpacity
                 onPress={handleExtraPress}
                 activeOpacity={0.85}
-                style={[
-                  styles.optionButton,
-                  styles.extraButton,
-                  extra && styles.optionButtonActive,
-                ]}
+                style={[styles.optionButton, styles.extraButton, extra && styles.optionButtonActive]}
               >
                 {extra && <View style={styles.buttonGlowStatic} />}
-                <Text style={[styles.optionText, extra && styles.optionTextActive]}>
-                  Extra Masala (+₹5)
-                </Text>
+                <Text style={[styles.optionText, extra && styles.optionTextActive]}>Extra Masala (+₹5)</Text>
               </TouchableOpacity>
             </Animated.View>
+
+            {/* ✨ MIXED CHAAT INGREDIENTS — animated */}
+            {productName === "Mixed Chaat" && (
+              <>
+                {/* Animated section header with underline sweep */}
+                <AnimatedSectionHeader label="Choose Ingredients 🥗" delay={750} />
+
+                {/* Counter badge */}
+                <Animated.View
+                  entering={FadeIn.delay(820).duration(400)}
+                  style={styles.counterBadge}
+                >
+                  <Text style={styles.counterText}>
+                    {selectedChaatOptions.length}/{mixedChaatOptions.length} selected
+                  </Text>
+                  {selectedChaatOptions.length > 5 && (
+                    <Animated.Text
+                      entering={ZoomIn.duration(250)}
+                      style={styles.extraChargeLabel}
+                    >
+                      +₹5 extra
+                    </Animated.Text>
+                  )}
+                </Animated.View>
+
+                {/* Ingredient chips with staggered slide-in */}
+                {mixedChaatOptions.map((option, idx) => (
+                  <IngredientChip
+                    key={option}
+                    option={option}
+                    selected={selectedChaatOptions.includes(option)}
+                    onPress={() => handleChaatOptionToggle(option)}
+                    index={idx}
+                  />
+                ))}
+
+                {/* Extra charge note */}
+                {selectedChaatOptions.length > 5 && (
+                  <Text style={{ color: GOLD, fontSize: 12, marginTop: 4 }}>
+                    +₹5 extra for more than 5 ingredients
+                  </Text>
+                )}
+              </>
+            )}
           </>
         )}
 
@@ -317,15 +622,9 @@ export default function Product() {
         </View>
 
         {/* TOTAL */}
-        <Animated.View
-          entering={FadeIn.delay(900).duration(600)}
-          style={styles.totalRow}
-        >
-          {/* 🔶 Brighter Total label */}
+        <Animated.View entering={FadeIn.delay(900).duration(600)} style={styles.totalRow}>
           <Text style={styles.totalLabel}>TOTAL</Text>
-          <Animated.Text style={[styles.total, totalAnimStyle]}>
-            ₹{totalPrice}
-          </Animated.Text>
+          <Animated.Text style={[styles.total, totalAnimStyle]}>₹{totalPrice}</Animated.Text>
         </Animated.View>
 
         {/* CTA */}
@@ -340,6 +639,7 @@ export default function Product() {
                   ...params,
                   spice: isCandy ? "N/A" : spice,
                   extra: isCandy ? "No" : extra ? "Yes" : "No",
+                  selectedChaatOptions: selectedChaatOptions.join(","),
                   totalPrice,
                 },
               })
@@ -350,9 +650,8 @@ export default function Product() {
             <Text style={styles.buttonText}>Add to Cart</Text>
           </TouchableOpacity>
         </Animated.View>
-
       </Animated.View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -487,15 +786,12 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     marginBottom: 6,
   },
-
-  // 🔶 Brighter: was "#C9A96E77", now "#C9A96E" full gold
   priceBadgeLabel: {
     color: "#D4AA72",
     fontSize: 12,
     letterSpacing: 1,
     fontWeight: "700",
   },
-
   priceBadgeValue: {
     color: GOLD_BRIGHT,
     fontSize: 18,
@@ -567,22 +863,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
     marginBottom: 2,
   },
-
-  // 🔶 Brighter: was "#C9A96E77", now solid warm gold
   totalLabel: {
     color: "#D4AA72",
     fontSize: 13,
     letterSpacing: 1.2,
     fontWeight: "700",
   },
-
   total: {
     fontSize: 22,
     color: GOLD_BRIGHT,
     fontWeight: "bold",
     textAlign: "right",
   },
-
   button: {
     backgroundColor: GOLD,
     padding: 16,
@@ -621,5 +913,162 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
     letterSpacing: 0.8,
+  },
+
+  /* 🌿 INGREDIENT CHIP STYLES */
+  ingredientChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: SURFACE,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#C9A96E22",
+    overflow: "hidden",
+    position: "relative",
+  },
+  ingredientChipActive: {
+    backgroundColor: "#321F0D",
+    borderColor: GOLD,
+    borderWidth: 1.5,
+  },
+  ingredientImageWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: "visible",
+    marginRight: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  // 💛 Pulsing gold glow blob behind image
+  ingredientOuterGlow: {
+    position: "absolute",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: GOLD,
+    opacity: 0.18,
+  },
+  // 🌀 Spinning gold ring (dashed border)
+  ingredientImageRing: {
+    position: "absolute",
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1.5,
+    borderColor: GOLD,
+    borderStyle: "dashed",
+  },
+  ingredientImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  // ✨ Shimmer flash sweep over image on tap
+  ingredientShimmer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: 16,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    transform: [{ skewX: "-15deg" }],
+  },
+  chipGlow: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: GOLD,
+    borderRadius: 12,
+  },
+  chipAccentLine: {
+    position: "absolute",
+    left: 0,
+    top: 8,
+    bottom: 8,
+    width: 3,
+    backgroundColor: GOLD,
+    borderRadius: 2,
+    opacity: 0.9,
+  },
+  chipText: {
+    flex: 1,
+    color: "#C8A96A",
+    fontSize: 14,
+    fontWeight: "500",
+    letterSpacing: 0.3,
+    paddingLeft: 6,
+  },
+  chipTextActive: {
+    color: GOLD_BRIGHT,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  checkCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: "#C9A96E44",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent",
+  },
+  checkCircleActive: {
+    backgroundColor: GOLD,
+    borderColor: GOLD,
+  },
+  checkMark: {
+    color: DARK,
+    fontSize: 11,
+    fontWeight: "bold",
+    lineHeight: 14,
+  },
+
+  /* 🏷️ SECTION HEADER */
+  sectionHeaderWrapper: {
+    marginTop: 14,
+    marginBottom: 8,
+  },
+  sectionUnderline: {
+    height: 1.5,
+    backgroundColor: GOLD,
+    opacity: 0.35,
+    marginTop: 4,
+    borderRadius: 1,
+  },
+
+  /* 🔢 COUNTER BADGE */
+  counterBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+    paddingHorizontal: 2,
+  },
+  counterText: {
+    color: "#8C7355",
+    fontSize: 11,
+    letterSpacing: 0.6,
+    fontWeight: "600",
+  },
+  extraChargeLabel: {
+    color: GOLD,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    backgroundColor: "#3B2912",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#C9A96E44",
+    overflow: "hidden",
   },
 });
