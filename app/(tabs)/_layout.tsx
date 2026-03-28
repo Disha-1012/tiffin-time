@@ -5,6 +5,7 @@ import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from "@expo/vector-icons";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -47,8 +48,8 @@ export default function TabLayout() {
         name="contact"
         options={{
           title: "Contact",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="phone.fill" color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="call-outline" size={size} color={color} />
           ),
         }}
       />
